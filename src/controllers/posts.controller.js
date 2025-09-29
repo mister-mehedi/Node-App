@@ -1,43 +1,93 @@
 import axios from "axios";
-
-const API_URL = process.env.API_URL || "https://jsonplaceholder.typicode.com/posts";
+import Post from "../models/post.model.js";
 
 // Get all posts
 export const getAllPosts = async (req, res) => {
-  try {
-    console.log("📡 Fetching from:", API_URL);
-    const response = await axios.get(API_URL);
-    res.status(200).json({
-      success: true,
-      count: response.data.length,
-      data: response.data,
-    });
-  } catch (error) {
-    console.error("❌ Error:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch posts",
-      error: error.message,
-    });
-  }
+  const posts = await Post.find();
+  res.status(200).json({
+    success: true,
+    count: posts.length,
+    data: posts,
+  });
 };
 
-// Get post by ID
+// Get single post by ID
 export const getPostById = async (req, res) => {
   const { id } = req.params;
-  try {
-    console.log(`📡 Fetching post ID: ${id} from ${API_URL}`);
-    const response = await axios.get(`${API_URL}/${id}`);
-    res.status(200).json({
-      success: true,
-      data: response.data,
-    });
-  } catch (error) {
-    console.error("❌ Error in getPostById:", error.message);
-    res.status(404).json({
+  const post = await Post.findById(id);
+
+  if (!post) {
+    return res.status(404).json({
       success: false,
       message: `Post with id ${id} not found`,
-      error: error.message,
     });
   }
+
+  res.status(200).json({
+    success: true,
+    data: post,
+  });
+};
+
+// Create new post
+export const createPost = async (req, res) => {
+  const { title, body } = req.body;
+
+  if (!title || !body) {
+    return res.status(400).json({
+      success: false,
+      message: "Title and body are required",
+    });
+  }
+
+  const newPost = await Post.create({ title, body });
+
+  res.status(201).json({
+    success: true,
+    data: newPost,
+  });
+};
+
+// Update post
+export const updatePost = async (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  const post = await Post.findByIdAndUpdate(
+    id,
+    { title, body },
+    { new: true, runValidators: true }
+  );
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: `Post with id ${id} not found`,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: post,
+  });
+};
+
+// Delete post
+export const deletePost = async (req, res) => {
+  const { id } = req.params;
+
+  const post = await Post.findByIdAndDelete(id);
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: `Post with id ${id} not found`,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Post deleted successfully",
+    data: post,
+  });
 };
