@@ -3,5 +3,6 @@ npm install express axios dotenv morgan express-async-errors
 npm install mongoose
 
 
+download and setup mongoDB and MongoDB Compass
 node src/server.js
 npm start
